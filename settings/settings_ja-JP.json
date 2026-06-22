@@ -1,0 +1,14 @@
+{
+    "data": {
+        "takeout_dir": "G:\\マイドライブ\\Takeout",
+        "analyzer": "unigram",
+        "max_phrases_for_exact_match": 20,
+        "date_time_regexp": "(\\d+)年(\\d+)月(\\d+)日.曜日 (\\d+):(\\d+):(\\d+) UTC",
+        "date_time_replacement": "$1-$2-$3 $4:$5:$6",
+        "date_time_parse_format": "2006-1-2 15:4:5",
+        "max_results": 50
+    },
+    "ui": {
+        "port": 1110
+    }
+}
