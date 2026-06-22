@@ -1,0 +1,6 @@
+{
+	"name": "Google-Chat-Takeout-Explorer-DevContainer",
+	"image": "mcr.microsoft.com/devcontainers/go:2-1.26-trixie",
+	"forwardPorts": [1110],
+	"postCreateCommand": "curl -fsSL https://vite.plus | bash"
+}
