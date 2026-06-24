@@ -1,3 +1,5 @@
+server/controller/ui
+
 .DS_Store
 .idea
 .pnpm-store
@@ -28,3 +30,4 @@ pnpm-debug.log*
 work
 yarn-debug.log*
 yarn-error.log*
+!.vscode/

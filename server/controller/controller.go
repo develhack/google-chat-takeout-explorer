@@ -2,9 +2,11 @@ package controller
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"google-chat-takeout-explorer/data"
 	"google-chat-takeout-explorer/settings"
+	"io/fs"
 	"log"
 	"log/slog"
 	"net/http"
@@ -16,7 +18,11 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
+
+//go:embed ui
+var ui embed.FS
 
 func Serve() error {
 
@@ -25,6 +31,31 @@ func Serve() error {
 	e.Logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	api := e.Group("/api")
+
+		e.Pre(middleware.RewriteWithConfig(middleware.RewriteConfig{
+		Skipper: func(c *echo.Context) bool {
+			switch {
+			case strings.HasPrefix(c.Request().URL.Path, "/data/"):
+				return true
+			case strings.HasPrefix(c.Request().URL.Path, "/api/"):
+				return true
+			case strings.HasPrefix(c.Request().URL.Path, "/assets/"):
+				return true
+			case c.Request().URL.Path == "/favicon.svg":
+				return true
+			default:
+				return false
+			}
+		},
+		Rules: map[string]string{"^/*": "/index.html"},
+	}))
+
+	fs, err := fs.Sub(ui, "ui")
+	if err != nil {
+		return err
+	}
+	e.StaticFS("/", fs)
+	e.Static("/data", settings.DataDir)
 
 	api.GET("/messages/:groupId", func(c *echo.Context) error {
 		groupId := c.Param("groupId")
