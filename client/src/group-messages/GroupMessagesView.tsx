@@ -79,12 +79,14 @@ export default function GroupMessagesView() {
 
   const navigate = useNavigate();
   const onSelectMessage = async (message: Message) => {
-    let to = `/${message.groupId}/${message.threadId}`;
+    if (message.groupId === groupId && message.threadId === threadId) {
+      return;
+    }
 
+    let to = `/${message.groupId}/${message.threadId}`;
     if (searchParams.size) {
       to += `?${searchParams.toString()}`;
     }
-
     await navigate(`${to}`);
   };
 

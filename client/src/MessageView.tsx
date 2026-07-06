@@ -1,7 +1,7 @@
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { FileIcon } from "lucide-react";
-import { useContext, useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
 import { AppContext } from "./AppContext";
 import { annotateMessage, resolveCustomEmojiUrl, toId, toLocalDateTimeString } from "./logic";
@@ -54,10 +54,7 @@ export default function MessageView({ message, isFocused, onSelectMessage }: Pro
           </CardContent>
         )}
         <CardContent>
-          <pre
-            className="whitespace-pre-wrap break-all"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+          <MessageText html={html} />
           {message.contents.attachedFiles &&
             message.contents.attachedFiles.map((file, i) => (
               <AattachedFile key={i} groupId={message.groupId} file={file} />
@@ -108,6 +105,12 @@ export default function MessageView({ message, isFocused, onSelectMessage }: Pro
     </div>
   );
 }
+
+const MessageText = React.memo(({ html }: { html: string }) => {
+  return (
+    <pre className="whitespace-pre-wrap break-all" dangerouslySetInnerHTML={{ __html: html }} />
+  );
+});
 
 function AattachedFile({ groupId, file }: { groupId: string; file: AttachedFile }) {
   const url = `/data/${groupId}/${file.exportName}`;

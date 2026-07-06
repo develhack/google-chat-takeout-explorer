@@ -83,8 +83,15 @@ export default function ThreadMessagesView() {
 
   const navigate = useNavigate();
   const onSelectMessage = async (message: Message) => {
-    let to = `/${message.groupId}/${message.threadId}/${message.messageId}`;
+    if (
+      message.groupId === groupId &&
+      message.threadId === threadId &&
+      message.messageId === messageId
+    ) {
+      return;
+    }
 
+    let to = `/${message.groupId}/${message.threadId}/${message.messageId}`;
     if (searchParams.size) {
       to += `?${searchParams.toString()}`;
     }
