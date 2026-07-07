@@ -56,14 +56,14 @@ function App({ promises }: Props) {
         <ResizablePanel defaultSize="25%" minSize={128}>
           <SidePanelView />
         </ResizablePanel>
-        <ResizableHandle withHandle  />
+        <ResizableHandle withHandle />
         <ResizablePanel minSize={128}>
           <main className="relative h-full flex flex-col">
             <ResizablePanelGroup orientation="horizontal" className="grow">
               <ResizablePanel minSize={128}>
                 {threadId ? <GroupMessagesView /> : <Empty>No group selected.</Empty>}
               </ResizablePanel>
-              <ResizableHandle withHandle  />
+              <ResizableHandle withHandle />
               <ResizablePanel minSize={128}>
                 {messageId ? <ThreadMessagesView /> : <Empty>No thread selected.</Empty>}
               </ResizablePanel>
