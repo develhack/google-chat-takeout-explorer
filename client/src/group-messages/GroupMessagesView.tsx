@@ -5,7 +5,8 @@ import Loading from "../Loading";
 import MessagesChunkPromiseView from "../MessagesChunkPromiseView";
 import { fetchAfterMessagesChunk, fetchBeforeMessagesChunk, fetchMessage } from "../fetch";
 import { matchId } from "../logic";
-import type { Message, MessagesChunk } from "../types";
+import type { Group, Message, MessagesChunk } from "../types";
+import Empty from "../Empty";
 
 export default function GroupMessagesView() {
   const params = useParams();
@@ -22,7 +23,7 @@ export default function GroupMessagesView() {
 
   const componentRootRef = useRef<HTMLDivElement>(null);
 
-  const group = groups[groupId];
+  const group = groups[groupId] as Group | undefined;
 
   const [messagesChunkPromiseList, setMessagesChunkPromiseList] = useState<
     Promise<MessagesChunk>[]
@@ -30,6 +31,10 @@ export default function GroupMessagesView() {
 
   const fetchAround = useEffectEvent(() => {
     void fetchMessage(`${groupId}/${threadId}/${threadId}`).then((message) => {
+      if (!message) {
+        return;
+      }
+
       setMessagesChunkPromiseList([
         fetchAfterMessagesChunk(fetchId, message.sequence).then((results) => {
           results.hasBefore = true;
@@ -40,6 +45,10 @@ export default function GroupMessagesView() {
   });
 
   useEffect(() => {
+    if (!group) {
+      return;
+    }
+
     const prevGroupId = prevGroupIdRef.current;
 
     prevGroupIdRef.current = groupId;
@@ -103,6 +112,10 @@ export default function GroupMessagesView() {
       fetchAfterMessagesChunk(fetchId, sequence + 1),
     ]);
   };
+
+  if (!group) {
+    return <Empty>No group found.</Empty>;
+  }
 
   return (
     <div ref={componentRootRef} className="h-full flex flex-col">

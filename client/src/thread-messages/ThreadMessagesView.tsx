@@ -5,7 +5,7 @@ import Loading from "../Loading";
 import MessagesChunkPromiseView from "../MessagesChunkPromiseView";
 import { fetchAfterMessagesChunk, fetchBeforeMessagesChunk, fetchMessage } from "../fetch";
 import { matchId } from "../logic";
-import type { Message, MessagesChunk } from "../types";
+import type { Group, Message, MessagesChunk } from "../types";
 
 export default function ThreadMessagesView() {
   const params = useParams();
@@ -24,7 +24,7 @@ export default function ThreadMessagesView() {
 
   const componentRootRef = useRef<HTMLDivElement>(null);
 
-  const group = groups[groupId];
+  const group = groups[groupId] as Group | undefined;
 
   const [messagesChunkPromiseList, setMessagesChunkPromiseList] = useState<
     Promise<MessagesChunk>[]
@@ -32,6 +32,10 @@ export default function ThreadMessagesView() {
 
   const fetchAround = useEffectEvent(() => {
     void fetchMessage(`${groupId}/${threadId}/${messageId}`).then((message) => {
+      if (!message) {
+        return;
+      }
+
       setMessagesChunkPromiseList([
         fetchAfterMessagesChunk(fetchId, message.sequence).then((results) => {
           results.hasBefore = true;
@@ -42,6 +46,10 @@ export default function ThreadMessagesView() {
   });
 
   useEffect(() => {
+    if (!group) {
+      return;
+    }
+
     const prevGroupId = prevGroupIdRef.current;
     const prevThreadId = prevThreadIdRef.current;
 
