@@ -1,0 +1,14 @@
+{
+    "data": {
+        "takeout_dir": "G:\\My Drive\\Takeout",
+        "analyzer": "standard",
+        "max_phrases_for_exact_match": 20,
+        "date_time_regexp": ".+, (\\w+) (\\d+), (\\d+) at (\\d+):(\\d+):(\\d+)\\x{202f}(\\w+) UTC",
+        "date_time_replacement": "$1 $2, $3 at $4:$5:$6 $7",
+        "date_time_parse_format": "January 2, 2006 at 3:4:5 PM",
+        "max_results": 50
+    },
+    "ui": {
+        "port": 1110
+    }
+}

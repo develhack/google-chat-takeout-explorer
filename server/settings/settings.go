@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 )
 
@@ -61,7 +60,7 @@ func init() {
 		log.Fatalf("Failed to resolve cache directory: %v", err)
 	}
 
-	AppCacheDir = path.Join(userCacheDir, "google-chat-takeout-explorer")
-	DataDir = path.Join(AppCacheDir, "data")
-	IndexDir = path.Join(AppCacheDir, "index")
+	AppCacheDir = filepath.Join(userCacheDir, "google-chat-takeout-explorer")
+	DataDir = filepath.Join(AppCacheDir, "data")
+	IndexDir = filepath.Join(AppCacheDir, "index")
 }
