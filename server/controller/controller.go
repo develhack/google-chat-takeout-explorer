@@ -50,11 +50,11 @@ func Serve() error {
 		Rules: map[string]string{"^/*": "/index.html"},
 	}))
 
-	fs, err := fs.Sub(ui, "ui")
+	uiFs, err := fs.Sub(ui, "ui")
 	if err != nil {
 		return err
 	}
-	e.StaticFS("/", fs)
+	e.StaticFS("/", uiFs)
 	e.Static("/data", settings.DataDir)
 
 	api.GET("/messages/:groupId", func(c *echo.Context) error {
@@ -106,8 +106,21 @@ func Serve() error {
 		offset, _ := echo.QueryParamOr(c, "offset", 0)
 		sort := c.QueryParam("sort")
 
-		fromTime, _ := time.Parse(time.RFC3339, from)
-		toTime, _ := time.Parse(time.RFC3339, to)
+		var fromTime, toTime time.Time
+		if from != "" {
+			var err error
+			fromTime, err = time.Parse(time.RFC3339, from)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid from date format")
+			}
+		}
+		if to != "" {
+			var err error
+			toTime, err = time.Parse(time.RFC3339, to)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid to date format")
+			}
+		}
 
 		res, err := data.SearchMessages(splitKeywords(keywords), groupId, author, fromTime, toTime, offset, sort)
 		if err != nil {

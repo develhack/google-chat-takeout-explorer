@@ -15,7 +15,6 @@ import (
 	"log"
 	"maps"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -78,7 +77,7 @@ var index bleve.Index
 func Init() error {
 
 	var err error
-	index, err = bleve.Open(path.Join(settings.IndexDir))
+	index, err = bleve.Open(filepath.Join(settings.IndexDir))
 	if err != nil {
 		return err
 	}
@@ -115,15 +114,15 @@ func BuildData() error {
 		return err
 	}
 
-	if err := os.WriteFile(path.Join(settings.DataDir, "account.txt"), []byte(account), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(settings.DataDir, "account.txt"), []byte(account), 0644); err != nil {
 		return err
 	}
 
-	if err := writeJson(path.Join(settings.DataDir, "groups.json"), groupsMap); err != nil {
+	if err := writeJson(filepath.Join(settings.DataDir, "groups.json"), groupsMap); err != nil {
 		return err
 	}
 
-	if err := writeJson(path.Join(settings.DataDir, "users.json"), usersMap); err != nil {
+	if err := writeJson(filepath.Join(settings.DataDir, "users.json"), usersMap); err != nil {
 		return err
 	}
 
@@ -157,9 +156,15 @@ func FetchAdjacentGroupMessages(groupId string, sequence int, direction string) 
 	chunk.Messages = make([]*Message, 0, len(results.Hits))
 	for _, hit := range results.Hits {
 		m := Message{}
-		m.Sequence = int(hit.Fields["sequence"].(float64))
+		if seq, ok := hit.Fields["sequence"].(float64); ok {
+			m.Sequence = int(seq)
+		}
 
 		ids := strings.Split(hit.ID, "/")
+		if len(ids) < 3 {
+			log.Printf("invalid message id: %s", hit.ID)
+			continue
+		}
 		m.GroupID = ids[0]
 		m.ThreadID = ids[1]
 		m.MessageID = ids[2]
@@ -170,7 +175,7 @@ func FetchAdjacentGroupMessages(groupId string, sequence int, direction string) 
 		}
 		m.Replies = replies
 
-		if err := readJsonFromFile(path.Join(settings.DataDir, m.GroupID, m.ThreadID, m.MessageID)+".json", &m.Contents); err != nil {
+		if err := readJsonFromFile(filepath.Join(settings.DataDir, m.GroupID, m.ThreadID, m.MessageID)+".json", &m.Contents); err != nil {
 			return nil, err
 		}
 
@@ -207,14 +212,20 @@ func FetchAdjacentThreadMessages(groupId string, threadId string, sequence int, 
 	chunk.Messages = make([]*Message, 0, len(results.Hits))
 	for _, hit := range results.Hits {
 		m := Message{}
-		m.Sequence = int(hit.Fields["sequence"].(float64))
+		if seq, ok := hit.Fields["sequence"].(float64); ok {
+			m.Sequence = int(seq)
+		}
 
 		ids := strings.Split(hit.ID, "/")
+		if len(ids) < 3 {
+			log.Printf("invalid message id: %s", hit.ID)
+			continue
+		}
 		m.GroupID = ids[0]
 		m.ThreadID = ids[1]
 		m.MessageID = ids[2]
 
-		if err := readJsonFromFile(path.Join(settings.DataDir, m.GroupID, m.ThreadID, m.MessageID)+".json", &m.Contents); err != nil {
+		if err := readJsonFromFile(filepath.Join(settings.DataDir, m.GroupID, m.ThreadID, m.MessageID)+".json", &m.Contents); err != nil {
 			return nil, err
 		}
 
@@ -236,12 +247,14 @@ func GetMessage(groupId string, threadId string, messageId string) (*Message, er
 
 	m := Message{}
 
-	m.Sequence = int(doc.Fields["sequence"].(float64))
+	if seq, ok := doc.Fields["sequence"].(float64); ok {
+		m.Sequence = int(seq)
+	}
 	m.GroupID = groupId
 	m.ThreadID = threadId
 	m.MessageID = messageId
 
-	if err := readJsonFromFile(path.Join(settings.DataDir, m.GroupID, m.ThreadID, m.MessageID)+".json", &m.Contents); err != nil {
+	if err := readJsonFromFile(filepath.Join(settings.DataDir, m.GroupID, m.ThreadID, m.MessageID)+".json", &m.Contents); err != nil {
 		return nil, err
 	}
 
@@ -310,15 +323,25 @@ func SearchMessages(keywords []string, groupId string, author string, from time.
 	rs.Results = make([]*SearchResult, 0, len(results.Hits))
 	for _, hit := range results.Hits {
 		r := SearchResult{}
-		r.Sequence = int(hit.Fields["sequence"].(float64))
+		if seq, ok := hit.Fields["sequence"].(float64); ok {
+			r.Sequence = int(seq)
+		}
 
 		ids := strings.Split(hit.ID, "/")
+		if len(ids) < 3 {
+			log.Printf("invalid message id: %s", hit.ID)
+			continue
+		}
 		r.GroupID = ids[0]
 		r.ThreadID = ids[1]
 		r.MessageID = ids[2]
 
-		r.Author = hit.Fields["author"].(string)
-		r.PostedAt = hit.Fields["posted_at"].(string)
+		if author, ok := hit.Fields["author"].(string); ok {
+			r.Author = author
+		}
+		if postedAt, ok := hit.Fields["posted_at"].(string); ok {
+			r.PostedAt = postedAt
+		}
 
 		for field, fragment := range hit.Fragments {
 			switch field {
@@ -411,7 +434,7 @@ func resolveGroupID(p string) (string, error) {
 
 func unarchiveTakeoutZipFiles(account *string, groupsMap *map[string](map[string]any), usersMap *map[string]string) error {
 
-	takeoutFiles, err := filepath.Glob(path.Join(settings.Data.TakeoutDir, "takeout-*.zip"))
+	takeoutFiles, err := filepath.Glob(filepath.Join(settings.Data.TakeoutDir, "takeout-*.zip"))
 	if err != nil {
 		return err
 	}
@@ -524,12 +547,12 @@ func processGroupInfoJson(f *zip.File, groupsMap *map[string](map[string]any), u
 func processMessagesJsonFiles(groupsMap *map[string](map[string]any)) error {
 
 	log.Println("find all messages.json")
-	messagesJsonFiles, err := filepath.Glob(path.Join(settings.DataDir, "*", "messages.json"))
+	messagesJsonFiles, err := filepath.Glob(filepath.Join(settings.DataDir, "*", "messages.json"))
 	if err != nil {
 		return err
 	}
 
-	index, err := bleve.New(path.Join(settings.IndexDir), createIndexMapping())
+	index, err := bleve.New(filepath.Join(settings.IndexDir), createIndexMapping())
 	if err != nil {
 		return err
 	}
@@ -643,7 +666,7 @@ func processMessagesJsonFiles(groupsMap *map[string](map[string]any)) error {
 					}
 
 					if isImageFile(physicalFileName) {
-						path := path.Join(settings.DataDir, groupId, physicalFileName)
+						path := filepath.Join(settings.DataDir, groupId, physicalFileName)
 						width, height, err := getImageSize(path)
 						if err == nil {
 							e["width"] = width
@@ -657,6 +680,10 @@ func processMessagesJsonFiles(groupsMap *map[string](map[string]any)) error {
 				}
 
 				ids := strings.Split(id, "/")
+				if len(ids) < 3 {
+					log.Printf("invalid message id in messages.json: %s", id)
+					continue
+				}
 				im := IndexedMessage{
 					Sequence:  i,
 					GroupID:   ids[0],
@@ -676,7 +703,7 @@ func processMessagesJsonFiles(groupsMap *map[string](map[string]any)) error {
 
 				m["posted_at"] = postedAt
 
-				p := path.Join(settings.DataDir, id) + ".json"
+				p := filepath.Join(settings.DataDir, id) + ".json"
 				d := filepath.Dir(p)
 				os.MkdirAll(d, 0755)
 				if err := writeJson(p, m); err != nil {
@@ -705,7 +732,7 @@ func processMessagesJsonFiles(groupsMap *map[string](map[string]any)) error {
 			return nil
 
 		}(); err != nil {
-			return nil
+			return err
 		}
 
 	}
@@ -725,12 +752,12 @@ func extractFile(f *zip.File) error {
 		return err
 	}
 
-	d := path.Join(settings.DataDir, id)
+	d := filepath.Join(settings.DataDir, id)
 	if err := os.MkdirAll(d, 0755); err != nil {
 		return err
 	}
 
-	p := path.Join(d, filepath.Base(f.Name))
+	p := filepath.Join(d, filepath.Base(f.Name))
 	w, err := os.Create(p)
 	if err != nil {
 		return err
