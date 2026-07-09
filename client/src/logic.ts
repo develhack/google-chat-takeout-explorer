@@ -2,6 +2,15 @@ import type { Annotation, CustomEmoji, Message } from "./types";
 
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+const escapeChars: Record<string, string> = {
+  "<": "&lt;",
+  ">": "&gt;",
+  "&": "&amp;",
+  '"': "&quot;",
+  "'": "&#x27;",
+  "`": "&#x60;",
+};
+
 export function toTemporal(dateTime?: string | Date | Temporal.Instant | null) {
   if (!dateTime) {
     return null;
@@ -187,6 +196,7 @@ export function annotateMessage(message: Message) {
   const elements = (message.contents.text || "")
     .split("")
     .map((s) => (s === "�" ? "" : s))
+    .map((s) => escapeChars[s] ?? s)
     .map((s) => [s]);
   for (const annotation of annotations.toSorted(annotationComparator)) {
     switch (annotation.formatMetadata?.formatType) {
